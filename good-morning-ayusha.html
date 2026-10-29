@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Good morning, Ayusha</title>
+<style>
+  :root { --sky1:#12163a; --sky2:#3a2f63; --sky3:#7a4f7d; --sun:#f4efe0; --h1:#3b2d52; --h2:#2b2145; --h3:#1d1536; --ink:#3d2a47; --soft:#6a4d70; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; overflow:hidden; }
+  body { background:linear-gradient(180deg,var(--sky1),var(--sky2) 55%,var(--sky3)); font-family:"Palatino Linotype",Palatino,Georgia,serif; color:var(--ink); touch-action:none; }
+  .stars { position:fixed; inset:0; opacity:1; background-image:
+    radial-gradient(2px 2px at 12% 18%,#fff,transparent),radial-gradient(1.5px 1.5px at 30% 8%,#fff,transparent),
+    radial-gradient(2px 2px at 55% 22%,#fff,transparent),radial-gradient(1.5px 1.5px at 78% 12%,#fff,transparent),
+    radial-gradient(2px 2px at 90% 30%,#fff,transparent),radial-gradient(1.5px 1.5px at 66% 6%,#fff,transparent),
+    radial-gradient(1.5px 1.5px at 20% 35%,#fff,transparent),radial-gradient(2px 2px at 44% 14%,#fff,transparent); }
+  .sun { position:fixed; left:50%; bottom:0; width:150px; height:150px; margin-left:-75px; border-radius:50%; background:var(--sun); border:0; padding:0; cursor:grab; touch-action:none; z-index:1;
+    box-shadow:0 0 50px 24px color-mix(in srgb,var(--sun) 50%,transparent); }
+  .sun:active { cursor:grabbing; }
+  .sun:focus-visible { outline:3px solid #fff; outline-offset:6px; }
+  .hills { position:fixed; left:0; bottom:0; width:100%; height:30%; z-index:2; pointer-events:none; }
+  .hint { position:fixed; left:0; right:0; top:14vh; text-align:center; color:#fff; font-size:1.3rem; line-height:1.5; padding:0 28px; z-index:3; pointer-events:none; transition:opacity .4s; }
+  .hint small { display:block; opacity:.75; font-size:.95rem; margin-top:6px; font-style:italic; }
+  main { position:fixed; left:50%; top:7vh; width:calc(100% - 40px); max-width:440px; transform:translateX(-50%) translateY(14px); z-index:3; text-align:center; padding:26px 24px 22px; border-radius:28px; background:rgba(255,250,244,.82); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); opacity:0; pointer-events:none; transition:opacity .8s, transform .8s; }
+  main.on { opacity:1; transform:translateX(-50%); pointer-events:auto; }
+  .date { margin:0 0 8px; font-style:italic; color:var(--soft); font-size:.95rem; }
+  h1 { margin:0 0 14px; font-size:clamp(2rem,9vw,2.7rem); line-height:1.08; }
+  .msg { margin:0 0 16px; min-height:5.6em; display:flex; align-items:center; justify-content:center; font-size:1.15rem; line-height:1.55; color:var(--soft); transition:opacity .3s, transform .3s; }
+  .msg.out { opacity:0; transform:translateY(8px); }
+  .q { margin:0 0 8px; font-size:.95rem; color:var(--soft); }
+  .row { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:14px; }
+  button.chip { font:inherit; font-size:.98rem; padding:9px 16px; border-radius:999px; border:2px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer; }
+  button.chip[aria-pressed="true"] { background:var(--ink); color:#fff6ec; }
+  .sign { margin:0 0 14px; font-style:italic; }
+  button.main { font:inherit; padding:11px 20px; border-radius:999px; border:2px solid var(--ink); background:var(--ink); color:#fff6ec; cursor:pointer; }
+  button:focus-visible { outline:3px solid #ff9f43; outline-offset:2px; }
+  .spark { position:fixed; width:8px; height:8px; border-radius:50%; background:#ffd166; z-index:4; pointer-events:none; animation:pop 1.1s ease-out forwards; }
+  @keyframes pop { to { transform:translate(var(--dx),var(--dy)) scale(.2); opacity:0; } }
+  @media (prefers-reduced-motion:reduce) { .spark { display:none; } main { transition:none; } }
+</style>
+</head>
+<body>
+  <div class="stars" id="stars" aria-hidden="true"></div>
+  <p class="hint" id="hint">It’s still dark out.<small>Drag the sun up to start Ayusha’s morning</small></p>
+
+  <main id="card" aria-live="polite">
+    <p class="date" id="date"></p>
+    <h1>Good morning, <span id="name"></span></h1>
+    <p class="msg" id="msg"></p>
+    <p class="q">How are you feeling today?</p>
+    <div class="row" id="moods">
+      <button class="chip" type="button" data-mood="sleepy" aria-pressed="false">Sleepy</button>
+      <button class="chip" type="button" data-mood="okay" aria-pressed="false">Okay</button>
+      <button class="chip" type="button" data-mood="ready" aria-pressed="false">Ready to go</button>
+    </div>
+    <p class="sign" id="sign"></p>
+    <div class="row" style="margin:0">
+      <button class="main" id="copy" type="button">Copy message</button>
+    </div>
+  </main>
+
+  <button class="sun" id="sun" type="button" role="slider" aria-label="Sunrise" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></button>
+  <svg class="hills" viewBox="0 0 400 150" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 70 Q80 20 170 60 T400 40 V150 H0Z" fill="var(--h1)"/>
+    <path d="M0 95 Q110 50 210 90 T400 75 V150 H0Z" fill="var(--h2)"/>
+    <path d="M0 120 Q90 85 200 115 T400 105 V150 H0Z" fill="var(--h3)"/>
+  </svg>
+
+<script>
+  // Edit these to change the name, sign-off, or messages.
+  var NAME = "Ayusha";
+  var SIGN = "– Sahil";
+  var MESSAGES = {
+    start:  "Hope you slept well. Wishing you a calm, happy day ahead.",
+    sleepy: "Slow start? That’s okay. Take your time, have some chai, and ease into the day.",
+    okay:   "A steady day is a good day. I hope it brings you small wins.",
+    ready:  "Love that energy! Go get it. The day is yours."
+  };
+
+  var root = document.documentElement.style;
+  var sun = document.getElementById("sun"), hint = document.getElementById("hint");
+  var card = document.getElementById("card"), stars = document.getElementById("stars");
+  var msg = document.getElementById("msg"), copyBtn = document.getElementById("copy");
+  var cur = MESSAGES.start, t = 0, revealed = false;
+
+  document.getElementById("name").textContent = NAME;
+  document.getElementById("sign").textContent = SIGN;
+  document.getElementById("date").textContent = new Date().toLocaleDateString(undefined, { weekday:"long", day:"numeric", month:"long" });
+  msg.textContent = cur;
+
+  function hex(h) { return [1,3,5].map(function (i) { return parseInt(h.substr(i,2),16); }); }
+  function mix(a,b,k) { var A=hex(a),B=hex(b); return "rgb("+A.map(function(v,i){return Math.round(v+(B[i]-v)*k);}).join(",")+")"; }
+  var P = { "--sky1":["#12163a","#7fb8e6"], "--sky2":["#3a2f63","#f9c7a0"], "--sky3":["#7a4f7d","#ffe6bf"],
+            "--sun":["#f4efe0","#ffd166"], "--h1":["#3b2d52","#e59a8a"], "--h2":["#2b2145","#c9788a"], "--h3":["#1d1536","#8f5a86"] };
+
+  function setT(v) {
+    t = Math.max(0, Math.min(1, v));
+    for (var k in P) root.setProperty(k, mix(P[k][0], P[k][1], t));
+    sun.style.bottom = (t * 46 - 4) + "vh";
+    stars.style.opacity = Math.max(0, 1 - t * 1.6);
+    hint.style.opacity = t > .15 ? 0 : 1;
+    sun.setAttribute("aria-valuenow", Math.round(t * 100));
+    if (t >= .92 && !revealed) { revealed = true; card.classList.add("on"); burst(); }
+    if (t < .6 && revealed) { revealed = false; card.classList.remove("on"); }
+  }
+
+  function tween(to) {
+    var from = t, start = null;
+    (function step(ts) {
+      if (start === null) start = ts;
+      var k = Math.min(1, (ts - start) / 700);
+      setT(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+      if (k < 1) requestAnimationFrame(step);
+    })(performance.now());
+  }
+
+  var drag = null;
+  sun.addEventListener("pointerdown", function (e) {
+    sun.setPointerCapture(e.pointerId);
+    drag = { y: e.clientY, t: t, moved: false };
+  });
+  sun.addEventListener("pointermove", function (e) {
+    if (!drag) return;
+    var dy = drag.y - e.clientY;
+    if (Math.abs(dy) > 5) drag.moved = true;
+    setT(drag.t + dy / (innerHeight * 0.46));
+  });
+  function end() { if (drag && !drag.moved) tween(t < .5 ? t + .5 : 1); drag = null; }
+  sun.addEventListener("pointerup", end);
+  sun.addEventListener("pointercancel", function () { drag = null; });
+  sun.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowUp" || e.key === "ArrowRight") { e.preventDefault(); tween(t + .25); }
+    if (e.key === "ArrowDown" || e.key === "ArrowLeft") { e.preventDefault(); tween(t - .25); }
+  });
+
+  function burst() {
+    var r = sun.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    for (var i = 0; i < 22; i++) {
+      var s = document.createElement("div"), a = Math.random() * 6.283, d = 80 + Math.random() * 140;
+      s.className = "spark"; s.style.left = cx + "px"; s.style.top = cy + "px";
+      s.style.setProperty("--dx", Math.cos(a) * d + "px"); s.style.setProperty("--dy", Math.sin(a) * d + "px");
+      document.body.appendChild(s); setTimeout(function (n) { n.remove(); }.bind(null, s), 1200);
+    }
+  }
+
+  var chips = document.querySelectorAll(".chip");
+  chips.forEach(function (c) {
+    c.addEventListener("click", function () {
+      chips.forEach(function (o) { o.setAttribute("aria-pressed", o === c ? "true" : "false"); });
+      msg.classList.add("out");
+      setTimeout(function () { cur = MESSAGES[c.dataset.mood]; msg.textContent = cur; msg.classList.remove("out"); }, 300);
+    });
+  });
+
+  copyBtn.addEventListener("click", function () {
+    var text = "Good morning, " + NAME + "! " + cur + " " + SIGN;
+    var done = function () { copyBtn.textContent = "Copied"; setTimeout(function () { copyBtn.textContent = "Copy message"; }, 1600); };
+    try { if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {}); } catch (e) {}
+  });
+
+  setT(0);
+</script>
+</body>
+</html>
